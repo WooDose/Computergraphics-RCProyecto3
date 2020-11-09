@@ -1,5 +1,6 @@
 # Computergraphics-RCProyecto3
 Proyecto 3 de Graficas
+
 Puntos que se terminaron:
 * (0 a 30 puntos) Según cuantos fps pueda renderizar su software: Al momento solo se puede renderizar entre 0.8 y 1.2fps, y llega hasta 1.8fps en modo automap.
 
