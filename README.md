@@ -16,6 +16,7 @@ Puntos que se terminaron:
 
 * (10 puntos) Por agregar al menos 1 animación a alguna sprite en la pantalla: Implementado, las pistolas se animan al apachar la tecla LCTRL, son animaciones de disparo.
 
+Nota: A veces se congela si se intenta atravesar una pared en modo 3d. En modo de automap no ocurre esto, y no ocurre todo el tiempo.
 Controles:
 
 En title screen: Cualquier tecla empieza el juego
