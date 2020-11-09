@@ -84,6 +84,7 @@ class Raycaster:
     self.hudratio = max(self.hudsize_x, self.hudsize_y)/max(self.width, self.height)
     self.titlesize = 500
     self.screenratio = self.titlesize/max(self.width,self.height)
+    self.blocksize_inverse = 1/self.blocksize
 
 
     self.player = {
@@ -93,6 +94,8 @@ class Raycaster:
       "fov": pi/3,
       "selected_weapon":1
     }
+    self.fov_half = self.player["fov"]/2
+    self.fovwidth = self.player["fov"]/self.width
 
   def point(self, x, y, c):
     screen.set_at((x, y), c)
@@ -161,14 +164,16 @@ class Raycaster:
           for line in f.readlines():
               self.map.append(line.replace("\n", ""))
 
-  def cast_ray(self, ray_angle):
+  def cast_ray(self, ray_angle, distance=1):
     d = 0
+    ray_angle_cos = cos(ray_angle)
+    ray_angle_sin = sin(ray_angle)
     while True:
-      x = self.player["x"] + d * cos(ray_angle)
-      y = self.player["y"] + d * sin(ray_angle)
+      x = self.player["x"] + d * ray_angle_cos
+      y = self.player["y"] + d * ray_angle_sin
 
-      i = int(x/self.blocksize)
-      j = int(y/self.blocksize)
+      i = int(x * self.blocksize_inverse)
+      j = int(y * self.blocksize_inverse)
 
       if self.map[j][i] != ' ':
         hitx = x - i*self.blocksize
@@ -185,15 +190,16 @@ class Raycaster:
 
       if AUTOMAP:
         self.point(int(x), int(y), (255, 255, 255))
-      d += self.ray_distance
+      d += distance
 
   def draw_stake(self, x, h, texture, tx):
-    
-    start = int(self.halfheight - h/2)
-    end =  int(self.halfheight + h/2)
+    half = h/2
+    start = int(self.halfheight - half)
+    end =  int(self.halfheight + half)
 
+    vdist = end-start
     for y in range(start, end):
-      ty = int(((y - start)*self.texture_size)/(end - start))
+      ty = int(((y - start)*self.texture_size)/(vdist))
       c = texture.get_at((tx,ty))
       self.point(x, y, c)
 
@@ -226,7 +232,7 @@ class Raycaster:
 
   def trymove(self, amount, back=False):
     v_angle = self.player["view_angle"]
-    d= self.cast_ray(v_angle)[0] if not back else self.cast_ray(v_angle+pi)[0]
+    d= self.cast_ray(v_angle, 10)[0] if not back else self.cast_ray(v_angle+pi, 10)[0]
     if d > amount:
       self.player["x"] += cos(v_angle)*amount * (-1 if back else 1)
       self.player["y"] += sin(v_angle)*amount * (-1 if back else 1)
@@ -239,17 +245,16 @@ class Raycaster:
     elif  AUTOMAP:
       for x in range(0, int(self.width), self.blocksize):
         for y in range(0, self.height, self.blocksize):
-            i = int(x/self.blocksize)
-            j = int(y/self.blocksize)
+            i = int(x*self.blocksize_inverse)
+            j = int(y*self.blocksize_inverse)
             # print(i,j)
             if self.map[j][i] != ' ':
                 self.draw_rectangle(x, y, textures[self.map[j][i]])
       self.point(int(self.player["x"]), int(self.player["y"]), (255,255,255))
-      self.cast_ray(self.player["view_angle"])
+      self.cast_ray(self.player["view_angle"], 10)
     else:
-
       for i in range(0,int(self.width)):
-        view_angle = (self.player["view_angle"]) - self.player["fov"]/2 + i * self.player["fov"]/self.width
+        view_angle = (self.player["view_angle"]) - self.fov_half + i * self.fovwidth
         d, c, tx = self.cast_ray(view_angle)
         x = i #+ int(self.width)
         h = int(self.width)/(d*cos(view_angle - self.player["view_angle"])) * 70
@@ -257,7 +262,6 @@ class Raycaster:
 
         c = textures[c]
         self.draw_stake(x,h,c, tx)
-
       for enemy in enemies:
         # self.point(enemy["x"], enemy["y"], (255, 0, 0))
         self.draw_sprite(enemy)
